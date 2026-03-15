@@ -676,37 +676,75 @@ setTimeout(function(){computeBodyResults();},300);
 },60);
 }
 
-function computeBodyResults(){
+async function computeBodyResults(){
 var h=parseFloat(document.getElementById("b-height").value);
 var w=parseFloat(document.getElementById("b-weight").value);
 var age=parseFloat(document.getElementById("b-age").value);
 var sex=document.getElementById("b-sex").value;
 var act=parseFloat(document.getElementById("b-activity").value);
 
-// Visual estimation variance — AI adds realistic randomness based on "visual cues"
-var baseBF;
-if(sex==="male"){
-// Base estimate from BMI-like calculation with visual variance
-var bmi=(w/h/h)*703;
-baseBF=(1.2*bmi)+(0.23*age)-16.2;
-baseBF=Math.max(4,Math.min(45,baseBF+(Math.random()*6-3)));
-} else {
-var bmi2=(w/h/h)*703;
-baseBF=(1.2*bmi2)+(0.23*age)-5.4;
-baseBF=Math.max(10,Math.min(55,baseBF+(Math.random()*6-3)));
+// Build image content array from uploaded photos
+var photoContent=[];
+["front","side","back"].forEach(function(slot){
+if(bodyPhotos[slot]){
+var b64=bodyPhotos[slot].split(",")[1];
+var mime=bodyPhotos[slot].split(";")[0].split(":")[1]||"image/jpeg";
+photoContent.push({type:"image",source:{type:"base64",media_type:mime,data:b64}});
 }
+});
+photoContent.push({
+type:"text",
+text:"You are a professional physique analyst and body composition specialist. Analyze the body photo(s) provided and estimate body fat percentage.\n\nContext:\n- Sex: "+sex+"\n- Age: "+age+"\n- Height: "+h+' inches\n- Weight: "+w+" lbs\n\nLook carefully at:\n- Muscle definition and vascularity visibility\n- Fat distribution around waist, hips, and midsection\n- Overall physique leanness\n- Skin fold visual estimates\n\nRespond ONLY with a JSON object, no other text:\n{"bf": <number>, "notes": "<one sentence about what you observed>"}\n\nThe bf value should be your best single estimate as a decimal number (e.g. 14.5). Be accurate and conservative — do not overestimate. For reference: 6-13% is athletic/lean for males, 14-17% is fit, 18-24% is average.'
+});
+
+try{
+var resp=await fetch("https://api.anthropic.com/v1/messages",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+model:"claude-haiku-4-5-20251001",
+max_tokens:120,
+messages:[{role:"user",content:photoContent}]
+})
+});
+var data=await resp.json();
+var raw=data.content&&data.content[0]&&data.content[0].text?data.content[0].text:"";
+var parsed=null;
+try{
+var clean=raw.replace(/```json|```/g,"").trim();
+parsed=JSON.parse(clean);
+}catch(e){}
+
+var baseBF;
+if(parsed&&parsed.bf&&parsed.bf>2&&parsed.bf<60){
+baseBF=Math.round(parsed.bf*10)/10;
+} else {
+// Fallback to conservative formula if vision fails
+var bmi=(w/h/h)*703;
+if(sex==="male") baseBF=Math.max(4,Math.min(40,(1.2*bmi)+(0.23*age)-16.2));
+else baseBF=Math.max(10,Math.min(50,(1.2*bmi)+(0.23*age)-5.4));
 baseBF=Math.round(baseBF*10)/10;
+}
+bodyResults.visionNotes=parsed&&parsed.notes?parsed.notes:"";
+}catch(e){
+// Formula fallback
+var bmi2=(w/h/h)*703;
+var baseBF2;
+if(sex==="male") baseBF2=Math.max(4,Math.min(40,(1.2*bmi2)+(0.23*age)-16.2));
+else baseBF2=Math.max(10,Math.min(50,(1.2*bmi2)+(0.23*age)-5.4));
+var baseBF=Math.round(baseBF2*10)/10;
+bodyResults.visionNotes="";
+}
 
 var fatMass=w*(baseBF/100);
 var leanMass=Math.round(w-fatMass);
-// Mifflin-St Jeor BMR
-var bmr;
 var hcm=h*2.54;var wkg=w*0.453592;
+var bmr;
 if(sex==="male") bmr=Math.round(10*wkg+6.25*hcm-5*age+5);
 else bmr=Math.round(10*wkg+6.25*hcm-5*age-161);
 var tdee=Math.round(bmr*act);
 
-bodyResults={bf:baseBF,leanMass:leanMass,bmr:bmr,tdee:tdee,weight:w,sex:sex,age:age,height:h,activity:act};
+bodyResults=Object.assign(bodyResults,{bf:baseBF,leanMass:leanMass,bmr:bmr,tdee:tdee,weight:w,sex:sex,age:age,height:h,activity:act});
 showBodyResult();
 }
 
@@ -757,7 +795,8 @@ generateBodyAIReport();
 async function generateBodyAIReport(){
 var r=bodyResults;
 var bfcat=getBFCategory(r.bf,r.sex);
-var prompt="You are a body composition specialist writing a personalized analysis. Here is the client's data:\n\nBody Fat: "+r.bf+"% ("+bfcat.cat+" category)\nLean Mass: "+r.leanMass+" lbs\nBMR: "+r.bmr+" calories/day\nTDEE: "+r.tdee+" calories/day\nAge: "+r.age+"\nSex: "+r.sex+"\nWeight: "+r.weight+" lbs\nHeight: "+r.height+' inches\n\nWrite a 200-word personalized body composition analysis. Include:\n1. What their current body fat percentage means in practical terms\n2. Their metabolic profile and what the BMR/TDEE numbers mean for their goals\n3. The single most important dietary or training change for their situation\n4. A specific, actionable 30-day target\n\nTone: direct, like a high-end personal trainer or sports nutritionist. No bullet points. Flowing paragraphs. Start directly with the analysis.';
+var visionObs=r.visionNotes?"\nVisual observation: "+r.visionNotes:"";
+var prompt="You are a body composition specialist writing a personalized analysis. Here is the client's data:\n\nBody Fat: "+r.bf+"% ("+bfcat.cat+" category)\nLean Mass: "+r.leanMass+" lbs\nBMR: "+r.bmr+" calories/day\nTDEE: "+r.tdee+" calories/day\nAge: "+r.age+"\nSex: "+r.sex+"\nWeight: "+r.weight+" lbs\nHeight: "+r.height+" inches"+visionObs+"\n\nWrite a 200-word personalized body composition analysis. Include:\n1. What their current body fat percentage means in practical terms\n2. Their metabolic profile and what BMR/TDEE means for their goals\n3. The single most important dietary or training change for their situation\n4. A specific, actionable 30-day target\n\nTone: direct, like a high-end personal trainer or sports nutritionist. No bullet points. Flowing paragraphs. Start directly with the analysis.";
 
 try{
 var resp=await fetch("https://api.anthropic.com/v1/messages",{
@@ -860,4 +899,3 @@ if(streak>1){renderStreak("streakhome");show("streakhome");}
 
 </body>
 </html>
-
