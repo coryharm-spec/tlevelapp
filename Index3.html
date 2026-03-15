@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>TLevel — AI Testosterone Analysis</title>
+<meta name="description" content="AI facial analysis. Instant T-index from a photo."/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0A0A0C;color:#E8E0D0;font-family:Georgia,'Times New Roman',serif;min-height:100vh;display:flex;flex-direction:column;align-items:center}
+button{cursor:pointer;font-family:inherit}
+input{font-family:inherit;color:#E8E0D0}
+#app{width:100%;max-width:480px;display:flex;flex-direction:column;min-height:100vh}
+.glow{position:fixed;top:-20%;left:50%;transform:translateX(-50%);width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(200,150,20,0.08),transparent 70%);pointer-events:none;z-index:0}
+header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 0;z-index:1}
+.logo{display:flex;align-items:baseline;gap:2px}
+.lt{font-size:28px;font-weight:700;color:#FFD700}
+.ll{font-size:20px;color:#C8A820;letter-spacing:6px}
+#navbtn{background:transparent;border:1px solid rgba(200,150,20,0.3);color:#C8A820;border-radius:6px;padding:6px 12px;font-size:12px}
+main{flex:1;padding:24px;display:flex;flex-direction:column;align-items:center;gap:22px;z-index:1}
+footer{padding:16px;font-size:10px;color:#333;letter-spacing:2px;text-transform:uppercase;text-align:center;z-index:1}
+.bg{background:linear-gradient(135deg,#C8A820,#FFD700);color:#0A0A0C;border:none;border-radius:8px;padding:13px 22px;font-size:14px;font-weight:700;letter-spacing:1px}
+.bo{background:transparent;color:#FFD700;border:1px solid rgba(200,150,20,0.5);border-radius:8px;padding:13px 22px;font-size:14px;font-weight:600;letter-spacing:1px}
+.ctag{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.hero{display:flex;flex-direction:column;align-items:center;gap:20px;text-align:center}
+.ra{width:100px;height:100px;border-radius:50%;border:1px solid rgba(200,150,20,0.2);display:flex;align-items:center;justify-content:center}
+.rb{width:76px;height:76px;border-radius:50%;border:1px solid rgba(200,150,20,0.4);display:flex;align-items:center;justify-content:center}
+.rc{width:54px;height:54px;border-radius:50%;background:radial-gradient(circle,rgba(200,150,20,0.15),transparent);border:1px solid rgba(200,150,20,0.6);display:flex;align-items:center;justify-content:center;font-size:22px;color:#FFD700}
+h1{font-size:34px;font-weight:700;line-height:1.15;letter-spacing:-1px}
+h1 em{font-style:italic;color:#FFD700}
+.sub{font-size:13px;color:#888;line-height:1.6;max-width:300px}
+.stats{display:flex;width:100%;border:1px solid rgba(255,255,255,0.06);border-radius:10px;overflow:hidden}
+.stat{flex:1;padding:12px 8px;text-align:center;border-right:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02)}
+.sv{font-size:20px;font-weight:700;color:#FFD700}
+.sl{font-size:9px;color:#555;letter-spacing:1.5px;text-transform:uppercase;margin-top:2px}
+.disc{font-size:10px;color:#444;text-align:center;line-height:1.5;max-width:340px}
+.camwrap{position:relative;width:100%;max-width:360px;border-radius:12px;overflow:hidden;border:1px solid rgba(200,150,20,0.3)}
+.camwrap video{width:100%;display:block;background:#111}
+.capbtn{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);width:56px;height:56px;border-radius:50%;background:rgba(0,0,0,0.6);border:3px solid #FFD700;display:flex;align-items:center;justify-content:center}
+.capdot{width:34px;height:34px;border-radius:50%;background:#FFD700;display:block}
+.sf{width:280px;height:280px;position:relative;overflow:hidden;border-radius:8px;background:#111;flex-shrink:0}
+.sf img{width:100%;height:100%;object-fit:cover}
+.scanline{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#FFD700,transparent);box-shadow:0 0 12px #FFD700;pointer-events:none}
+.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(200,150,20,0.07) 1px,transparent 1px),linear-gradient(90deg,rgba(200,150,20,0.07) 1px,transparent 1px);background-size:20px 20px;pointer-events:none}
+.ctl{position:absolute;top:8px;left:8px;width:18px;height:18px;border-top:2px solid #FFD700;border-left:2px solid #FFD700}
+.ctr{position:absolute;top:8px;right:8px;width:18px;height:18px;border-top:2px solid #FFD700;border-right:2px solid #FFD700}
+.cbl{position:absolute;bottom:8px;left:8px;width:18px;height:18px;border-bottom:2px solid #FFD700;border-left:2px solid #FFD700}
+.cbr{position:absolute;bottom:8px;right:8px;width:18px;height:18px;border-bottom:2px solid #FFD700;border-right:2px solid #FFD700}
+.stglbl{font-size:12px;color:#FFD700;letter-spacing:2px;text-transform:uppercase;text-align:center}
+.pbar{width:100%;height:3px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden}
+.pfill{height:100%;background:linear-gradient(90deg,#C8A820,#FFD700);border-radius:2px;transition:width 0.1s}
+.ppct{font-size:12px;color:#666;letter-spacing:2px}
+.stream{width:100%;display:flex;flex-direction:column;gap:6px}
+.stline{font-size:11px;color:#AAA;letter-spacing:1px;display:flex;align-items:center;gap:8px}
+.stico{color:#FFD700}
+.rhead{display:flex;gap:16px;width:100%;align-items:center}
+.thumb{width:90px;height:90px;border-radius:8px;overflow:hidden;position:relative;flex-shrink:0;border:1px solid rgba(200,150,20,0.3)}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.scob{flex:1}
+.sclbl{font-size:9px;color:#666;letter-spacing:3px;text-transform:uppercase;margin-bottom:2px}
+.scval{font-size:52px;font-weight:700;line-height:1;letter-spacing:-2px}
+.scbdg{display:inline-block;font-size:10px;font-weight:700;letter-spacing:2.5px;padding:3px 10px;border-radius:4px;margin-top:6px}
+.scsub{font-size:11px;color:#777;margin-top:4px}
+.gauge{width:100%}
+.gtrack{width:100%;height:6px;background:rgba(255,255,255,0.08);border-radius:3px;position:relative;margin-bottom:8px}
+.gfill{height:100%;border-radius:3px}
+.gthumb{position:absolute;top:-5px;width:16px;height:16px;border-radius:50%;background:#0A0A0C;border:2px solid}
+.glbls{display:flex;justify-content:space-between;font-size:9px;color:#444;letter-spacing:1px;text-transform:uppercase}
+.strkw{width:100%;background:rgba(255,107,53,0.05);border:1px solid rgba(255,107,53,0.2);border-radius:10px;padding:14px 16px}
+.strkt{display:flex;justify-content:space-between;margin-bottom:12px}
+.strkl{font-size:9px;color:#555;letter-spacing:2.5px;text-transform:uppercase}
+.strkn{font-size:28px;font-weight:700;color:#FF6B35;line-height:1.2}
+.strkls{font-size:13px;color:#AAA;margin-top:2px}
+.strkd{display:flex;gap:8px;justify-content:space-between}
+.dotcol{display:flex;flex-direction:column;align-items:center;gap:4px}
+.dot{width:28px;height:28px;border-radius:50%}
+.dotl{font-size:9px;letter-spacing:1px}
+.lockblk{width:100%;display:flex;flex-direction:column;align-items:center;gap:12px;border:1px solid rgba(200,150,20,0.2);border-radius:12px;padding:28px 20px;background:rgba(200,150,20,0.03)}
+.lockico{font-size:36px}
+.lockt{font-size:18px;font-weight:700}
+.locks{font-size:13px;color:#666;text-align:center;line-height:1.5;max-width:280px}
+.lockfl{width:100%;display:flex;flex-direction:column;gap:8px}
+.lockft{display:flex;align-items:center;gap:10px;font-size:13px;color:#AAA}
+.lockd{font-size:10px;color:#444}
+.card{width:100%;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:16px}
+.cardtl{font-size:9px;color:#555;letter-spacing:3px;text-transform:uppercase;margin-bottom:12px}
+.trow{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+.tico{font-size:12px;width:16px}
+.tlbl{flex:1;font-size:13px;color:#AAA}
+.tval{font-size:12px;font-weight:600}
+.rrow{display:flex;gap:12px;align-items:flex-start;margin-bottom:10px}
+.rnum{font-size:10px;color:#C8A820;font-weight:700;letter-spacing:1px;padding-top:2px;flex-shrink:0}
+.rtxt{font-size:13px;color:#BBB;line-height:1.4}
+.alink{font-size:11px;color:#FFD700;text-decoration:none;margin-top:3px;display:inline-block}
+.shareimg{width:100%;border-radius:6px;margin-bottom:12px}
+.shareact{display:flex;gap:10px;flex-wrap:wrap}
+.shareh{font-size:10px;color:#444;margin:8px 0 0;text-align:center}
+.resdisc{font-size:10px;color:#333;text-align:center;line-height:1.5}
+.nrow{display:flex;gap:8px;margin-top:8px}
+.ninput{flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(200,150,20,0.3);border-radius:6px;padding:10px 12px;font-size:13px;outline:none}
+.nbtn{background:linear-gradient(135deg,#C8A820,#FFD700);color:#0A0A0C;border:none;border-radius:6px;padding:10px 16px;font-size:13px;font-weight:700}
+.ptitle{font-size:11px;letter-spacing:4px;color:#555;text-transform:uppercase;margin-bottom:4px}
+.brdw{width:100%;border:1px solid rgba(255,255,255,0.06);border-radius:10px;overflow:hidden}
+.brdh{background:rgba(200,150,20,0.06);border-bottom:1px solid rgba(255,255,255,0.06);padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+.brdht{font-size:12px;font-weight:700;color:#FFD700;letter-spacing:1px}
+.brdhs{font-size:10px;color:#555}
+.brow{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.03)}
+.brow.you{background:rgba(200,150,20,0.08);border-left:2px solid #FFD700}
+.brk{width:28px;font-size:13px;font-weight:700;flex-shrink:0}
+.brn{flex:1;font-size:13px;color:#AAA;display:flex;align-items:center;gap:6px}
+.ybdg{font-size:8px;background:#FFD700;color:#0A0A0C;padding:1px 5px;border-radius:3px;font-weight:700}
+.brstk{font-size:11px;color:#FF6B35}
+.brsco{font-size:14px;font-weight:700;width:40px;text-align:right}
+.brlbl{font-size:9px;letter-spacing:1.5px;width:52px;text-align:right}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:200;display:flex;align-items:center;justify-content:center;padding:24px}
+.modal{background:#0F0F11;border:1px solid rgba(200,150,20,0.45);border-radius:16px;padding:32px 28px;max-width:360px;width:100%;display:flex;flex-direction:column;align-items:center;gap:12px}
+.mbdg{font-size:9px;letter-spacing:3px;color:#C8A820;text-transform:uppercase;border:1px solid rgba(200,150,20,0.3);padding:4px 12px;border-radius:20px}
+.mprc{font-size:56px;font-weight:700;color:#FFD700;letter-spacing:-2px;line-height:1}
+.msub{font-size:11px;color:#555}
+.mfts{width:100%;display:flex;flex-direction:column;gap:8px;margin:8px 0}
+.mft{display:flex;align-items:center;gap:10px;font-size:13px;color:#AAA}
+.msec{font-size:10px;color:#444;text-align:center}
+.mskp{background:none;border:none;color:#444;font-size:12px;margin-top:4px}
+.hidden{display:none!important}
+canvas{display:none}
+</style>
+</head>
+<body>
+<div class="glow"></div>
+<div id="app">
+  <header>
+    <div class="logo"><span class="lt">T</span><span class="ll">LEVEL</span></div>
+    <button id="navbtn" onclick="toggleBoard()">🏆 Board</button>
+  </header>
+
+  <main id="phome">
+    <div class="hero">
+      <div class="ra"><div class="rb"><div class="rc">⬡</div></div></div>
+      <h1>Read Your<br><em>Testosterone</em><br>In Seconds</h1>
+      <p class="sub">AI-powered facial analysis. Instant T-index estimation from a single photo.</p>
+    </div>
+    <div id="streakhome" class="hidden"></div>
+    <div class="ctag">
+      <button class="bg" onclick="document.getElementById('fileinput').click()">📷 Upload Photo</button>
+      <button class="bo" onclick="startCam()">◎ Camera</button>
+      <input id="fileinput" type="file" accept="image/*" style="display:none" onchange="doFile(this)"/>
+    </div>
+    <div id="camsec" class="hidden">
+      <div class="camwrap"><video id="vid" autoplay playsinline muted></video><button class="capbtn" onclick="capPhoto()"><span class="capdot"></span></button></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="sv">2.4M+</div><div class="sl">Analyses</div></div>
+      <div class="stat"><div class="sv">91%</div><div class="sl">Accuracy*</div></div>
+      <div class="stat"><div class="sv">3.2s</div><div class="sl">Avg Scan</div></div>
+    </div>
+    <button class="bo" style="font-size:12px;padding:10px 18px" onclick="toggleBoard()">🏆 View Global Leaderboard</button>
+    <p class="disc">*For entertainment purposes only. Not a medical diagnostic tool.</p>
+  </main>
+
+  <main id="pscan" class="hidden">
+    <div class="sf"><img id="scanimg" src="" alt=""/><div class="scanline" id="scanline"></div><div class="grid"></div><div class="ctl"></div><div class="ctr"></div><div class="cbl"></div><div class="cbr"></div></div>
+    <div class="stglbl" id="stagelbl">Detecting facial geometry...</div>
+    <div class="pbar"><div class="pfill" id="pfill" style="width:0"></div></div>
+    <div class="ppct" id="ppct">0%</div>
+    <div class="stream" id="streamdiv"></div>
+  </main>
+
+  <main id="presult" class="hidden">
+    <div class="rhead">
+      <div class="thumb"><img id="resimg" src="" alt=""/><div class="ctl"></div><div class="cbr"></div></div>
+      <div class="scob">
+        <div class="sclbl">T-INDEX SCORE</div>
+        <div class="scval" id="scval">—</div>
+        <div class="scbdg" id="scbdg">—</div>
+        <div class="scsub" id="scsub">—</div>
+      </div>
+    </div>
+    <div class="gauge">
+      <div class="gtrack"><div class="gfill" id="gfill"></div><div class="gthumb" id="gthumb"></div></div>
+      <div class="glbls"><span>LOW</span><span>OPTIMAL</span><span>HIGH</span><span>ELITE</span></div>
+    </div>
+    <div id="streakres"></div>
+    <div id="locksec" class="lockblk">
+      <div class="lockico">🔒</div>
+      <div class="lockt">Full Report Locked</div>
+      <div class="locks">Unlock facial markers, optimization protocol, share card & leaderboard entry</div>
+      <div class="lockfl">
+        <div class="lockft"><span style="color:#FFD700">✓</span>Facial Markers (5)</div>
+        <div class="lockft"><span style="color:#FFD700">✓</span>Optimization Protocol</div>
+        <div class="lockft"><span style="color:#FFD700">✓</span>Shareable Score Card</div>
+        <div class="lockft"><span style="color:#FFD700">✓</span>Leaderboard Entry</div>
+      </div>
+      <button class="bg" onclick="showPW()">🔓 &nbsp;Unlock Full Report — $2.99</button>
+      <p class="lockd">One-time · Instant access · Secured by Stripe</p>
+    </div>
+    <div id="unlocksec" class="hidden" style="display:flex;flex-direction:column;gap:16px;width:100%">
+      <div class="card" id="namecard">
+        <div class="cardtl">ENTER LEADERBOARD NAME</div>
+        <div class="nrow"><input class="ninput" id="nameinput" placeholder="YourHandle" maxlength="18"/><button class="nbtn" onclick="submitName()">Submit</button></div>
+      </div>
+      <div class="card"><div class="cardtl">FACIAL MARKERS DETECTED</div><div id="traitslist"></div></div>
+      <div class="card" style="background:rgba(200,150,20,0.04);border-color:rgba(200,150,20,0.12)"><div class="cardtl">OPTIMIZATION PROTOCOL</div><div id="recslist"></div></div>
+      <div class="card">
+        <div class="cardtl">YOUR SCORE CARD</div>
+        <img id="sharecard" class="shareimg hidden" src="" alt=""/>
+        <div class="shareact">
+          <button class="bg" onclick="dlCard()">↓ Download</button>
+          <button class="bo" style="font-size:13px" id="cpbtn" onclick="cpLink()">Copy Link</button>
+        </div>
+        <p class="shareh">Post to X / TikTok with #TLevel @tlevelapp</p>
+      </div>
+      <div id="boardres"></div>
+    </div>
+    <p class="resdisc">AI estimate for entertainment purposes only. Not a medical diagnostic tool.</p>
+    <button class="bo" style="font-size:13px" onclick="resetApp()">↺ Scan Again</button>
+  </main>
+
+  <main id="pboard" class="hidden">
+    <div class="ptitle">GLOBAL LEADERBOARD</div>
+    <div id="streakboard"></div>
+    <div id="boardmain"></div>
+    <p class="disc">Scan your face to appear on the leaderboard</p>
+  </main>
+
+  <footer>TLevel · tlevelapp.com · @tlevelapp · Not a medical device</footer>
+</div>
+
+<div class="overlay hidden" id="pwmodal">
+  <div class="modal">
+    <div class="mbdg">UNLOCK FULL REPORT</div>
+    <div class="mprc">$2.99</div>
+    <div class="msub">one-time · instant access</div>
+    <div class="mfts">
+      <div class="mft"><span style="color:#FFD700">✓</span>Full facial marker breakdown</div>
+      <div class="mft"><span style="color:#FFD700">✓</span>Personalized optimization protocol</div>
+      <div class="mft"><span style="color:#FFD700">✓</span>Supplement & lab test links</div>
+      <div class="mft"><span style="color:#FFD700">✓</span>Downloadable shareable score card</div>
+      <div class="mft"><span style="color:#FFD700">✓</span>Global leaderboard entry</div>
+    </div>
+    <button class="bg" style="width:100%" onclick="doUnlock()">🔓 &nbsp;Unlock with Stripe</button>
+    <div class="msec">🔒 Secured by Stripe · No subscription · No account needed</div>
+    <button class="mskp" onclick="hidePW()">Maybe later</button>
+  </div>
+</div>
+
+<canvas id="sharecanvas"></canvas>
+<canvas id="capcanvas"></canvas>
+
+<script>
+var STRIPE="https://buy.stripe.com/YOUR_LINK";
+var AFF={marek:"https://marekhealth.com/?ref=tlevel",roman:"https://ro.co/?ref=tlevel",legion:"https://legionathletics.com/?ref=tlevel"};
+var STAGES=["Detecting facial geometry...","Mapping bone structure...","Analyzing jaw definition...","Measuring brow ridge density...","Scanning facial symmetry...","Cross-referencing hormonal markers...","Calculating T-index..."];
+var BOARD=[{n:"ChadThunder92",s:947,st:14},{n:"IronMike_TX",s:923,st:9},{n:"AlphaWolf88",s:901,st:21},{n:"TylerOmaha",s:889,st:5},{n:"MarcusK_SD",s:871,st:7},{n:"GrizBear_MT",s:856,st:3},{n:"JordanFlex",s:834,st:11},{n:"ReinhardtV",s:812,st:6},{n:"SteelCity_P",s:798,st:2},{n:"KodiakMen",s:781,st:8}];
+var score=0,streak=parseInt(localStorage.getItem("tl_s")||"1"),unlocked=false,shareUrl=null,camStream=null,uname="",imgData=null,scanTimer=null;
+
+function rating(s){
+  if(s>=850)return{l:"ELITE",c:"#FFD700",sub:"Top 5% of males"};
+  if(s>=700)return{l:"HIGH",c:"#F5A623",sub:"Above average range"};
+  if(s>=500)return{l:"OPTIMAL",c:"#7ED321",sub:"Healthy normal range"};
+  if(s>=350)return{l:"MODERATE",c:"#4A90D9",sub:"Room to optimize"};
+  return{l:"LOW",c:"#E84040",sub:"Consider a specialist"};
+}
+function show(id){var e=document.getElementById(id);if(e)e.classList.remove("hidden")}
+function hide(id){var e=document.getElementById(id);if(e)e.classList.add("hidden")}
+function page(p){
+  ["phome","pscan","presult","pboard"].forEach(function(x){hide(x)});
+  show("p"+p);
+  document.getElementById("navbtn").textContent=p==="board"?"← Back":"🏆 Board";
+}
+function toggleBoard(){
+  var btn=document.getElementById("navbtn");
+  if(btn.textContent.indexOf("Board")>-1){page("board");renderBoard("boardmain");if(score)renderStreak("streakboard");}
+  else page("home");
+}
+function renderStreak(id){
+  var today=new Date().toLocaleDateString("en-US",{month:"short",day:"numeric"});
+  var days=[];for(var i=0;i<7;i++){var d=new Date();d.setDate(d.getDate()-(6-i));days.push({day:["S","M","T","W","T","F","S"][d.getDay()],active:i>=7-streak});}
+  document.getElementById(id).innerHTML='<div class="strkw"><div class="strkt"><div><div class="strkl">CURRENT STREAK</div><div class="strkn">'+streak+' 🔥</div></div><div style="text-align:right"><div class="strkl">LAST SCAN</div><div class="strkls">'+today+'</div></div></div><div class="strkd">'+days.map(function(d){return'<div class="dotcol"><div class="dot" style="background:'+(d.active?"#FFD700":"rgba(255,255,255,0.08)")+';box-shadow:'+(d.active?"0 0 6px #FFD700":"none")+'"></div><div class="dotl" style="color:'+(d.active?"#C8A820":"#444")+'">'+d.day+'</div></div>';}).join("")+'</div></div>';
+}
+function renderBoard(id,us,ust,un){
+  var entries=BOARD.slice();
+  if(us)entries.push({n:un||"You",s:us,st:ust,isU:true});
+  entries.sort(function(a,b){return b.s-a.s});entries=entries.slice(0,10);
+  document.getElementById(id).innerHTML='<div class="brdw"><div class="brdh"><span class="brdht">🏆 GLOBAL LEADERBOARD</span><span class="brdhs">Top T-Indexes Today</span></div>'+entries.map(function(e,i){var r=rating(e.s);return'<div class="brow'+(e.isU?" you":"")+'"><div class="brk" style="color:'+(i===0?"#FFD700":i===1?"#C0C0C0":i===2?"#CD7F32":"#555")+'">'+(i===0?"👑":"#"+(i+1))+'</div><div class="brn">'+e.n+(e.isU?'<span class="ybdg">YOU</span>':'')+'</div>'+(e.st>1?'<div class="brstk">🔥'+e.st+'</div>':'')+'<div class="brsco" style="color:'+r.c+'">'+e.s+'</div><div class="brlbl" style="color:'+r.c+'">'+r.l+'</div></div>';}).join("")+'</div>';
+}
+function doFile(input){
+  var file=input.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(e){imgData=e.target.result;streak++;localStorage.setItem("tl_s",streak);startScan();};
+  reader.readAsDataURL(file);
+}
+function startCam(){
+  navigator.mediaDevices.getUserMedia({video:{facingMode:"user"},audio:false}).then(function(s){
+    camStream=s;show("camsec");var v=document.getElementById("vid");v.srcObject=s;
+  }).catch(function(){alert("Camera denied. Please upload a photo.");});
+}
+function capPhoto(){
+  var v=document.getElementById("vid"),c=document.getElementById("capcanvas");
+  c.width=v.videoWidth;c.height=v.videoHeight;c.getContext("2d").drawImage(v,0,0);
+  imgData=c.toDataURL("image/jpeg");
+  if(camStream)camStream.getTracks().forEach(function(t){t.stop();});
+  hide("camsec");streak++;localStorage.setItem("tl_s",streak);startScan();
+}
+function startScan(){
+  document.getElementById("scanimg").src=imgData;
+  page("scan");
+  var elapsed=0,total=4200,step=total/STAGES.length,sy=0;
+  if(scanTimer)clearInterval(scanTimer);
+  scanTimer=setInterval(function(){
+    elapsed+=60;
+    var pct=Math.min((elapsed/total)*100,98);
+    var idx=Math.min(Math.floor(elapsed/step),STAGES.length-1);
+    document.getElementById("pfill").style.width=pct+"%";
+    document.getElementById("ppct").textContent=Math.round(pct)+"%";
+    document.getElementById("stagelbl").textContent=STAGES[idx];
+    sy=(sy+2)%100;document.getElementById("scanline").style.top=sy+"%";
+    var s="";for(var i=0;i<=idx;i++)s+='<div class="stline" style="opacity:'+(i===idx?1:0.3)+'"><span class="stico">'+(i<idx?"✓":"▶")+'</span> '+STAGES[i]+'</div>';
+    document.getElementById("streamdiv").innerHTML=s;
+    if(elapsed>=total){
+      clearInterval(scanTimer);
+      document.getElementById("pfill").style.width="100%";
+      document.getElementById("ppct").textContent="100%";
+      setTimeout(function(){score=Math.floor(300+Math.random()*620);showResult();},300);
+    }
+  },60);
+}
+function showResult(){
+  var r=rating(score);
+  document.getElementById("resimg").src=imgData;
+  document.getElementById("scval").textContent=score;document.getElementById("scval").style.color=r.c;
+  var b=document.getElementById("scbdg");b.textContent=r.l;b.style.background=r.c+"22";b.style.border="1px solid "+r.c;b.style.color=r.c;
+  document.getElementById("scsub").textContent=r.sub;
+  var pct=(score/1000)*100;
+  document.getElementById("gfill").style.width=pct+"%";document.getElementById("gfill").style.background="linear-gradient(90deg,#4A90D9,"+r.c+")";
+  document.getElementById("gthumb").style.left="calc("+pct+"% - 8px)";document.getElementById("gthumb").style.borderColor=r.c;
+  renderStreak("streakres");
+  page("result");
+}
+function showPW(){document.getElementById("pwmodal").classList.remove("hidden");}
+function hidePW(){document.getElementById("pwmodal").classList.add("hidden");}
+function doUnlock(){
+  if(STRIPE!=="https://buy.stripe.com/YOUR_LINK"){window.open(STRIPE,"_blank");}
+  else{hidePW();unlock();}
+}
+function unlock(){
+  unlocked=true;hide("locksec");
+  var u=document.getElementById("unlocksec");u.classList.remove("hidden");u.style.display="flex";
+  renderTraits();renderRecs();genCard();renderBoard("boardres",score,streak,uname||"You");
+}
+function submitName(){
+  var v=document.getElementById("nameinput").value.trim();
+  if(v){uname=v;hide("namecard");renderBoard("boardres",score,streak,uname);}
+}
+function renderTraits(){
+  var s=score;
+  var t=[
+    {l:"Jaw Angle",v:s>700?"Strong":s>450?"Moderate":"Soft",i:s>700?"◆":s>450?"◈":"○",c:s>700?"#FFD700":s>450?"#F5A623":"#777"},
+    {l:"Brow Ridge",v:s>700?"Prominent":s>450?"Average":"Subtle",i:s>700?"◆":s>450?"◈":"○",c:s>700?"#FFD700":s>450?"#F5A623":"#777"},
+    {l:"Facial Width (fWHR)",v:s>700?"High":s>450?"Balanced":"Narrow",i:s>700?"◆":s>450?"◈":"○",c:s>700?"#FFD700":s>450?"#F5A623":"#777"},
+    {l:"Skin Texture",v:s>600?"Coarse":"Smooth",i:s>600?"◆":"○",c:s>600?"#FFD700":"#777"},
+    {l:"Facial Hair",v:s>650?"Dense":s>400?"Moderate":"Light",i:s>650?"◆":"◈",c:s>650?"#FFD700":"#F5A623"}
+  ];
+  document.getElementById("traitslist").innerHTML=t.map(function(x){return'<div class="trow"><span class="tico" style="color:'+x.c+'">'+x.i+'</span><span class="tlbl">'+x.l+'</span><span class="tval" style="color:'+x.c+'">'+x.v+'</span></div>';}).join("");
+}
+function renderRecs(){
+  var s=score,recs;
+  if(s>=700)recs=[{t:"Maintain heavy compound lifts 4x/week",a:null},{t:"Optimize sleep to 8-9 hrs",a:null},{t:"Get a full hormone panel to confirm levels",a:"marek"},{t:"Zinc, Vitamin D3+K2, Ashwagandha stack",a:"legion"}];
+  else if(s>=500)recs=[{t:"Increase squat & deadlift volume",a:null},{t:"Cold exposure: 3-min cold shower daily",a:null},{t:"Blood panel: Total T, Free T, LH, FSH",a:"marek"},{t:"Evidence-based supplementation stack",a:"legion"}];
+  else recs=[{t:"Consult with a men's health specialist",a:"roman"},{t:"Full hormone panel: Total T, Free T, LH, FSH, E2",a:"marek"},{t:"Lifestyle protocol: sleep, stress, diet overhaul",a:null},{t:"Consider TRT evaluation with licensed provider",a:"roman"}];
+  document.getElementById("recslist").innerHTML=recs.map(function(r,i){return'<div class="rrow"><span class="rnum">0'+(i+1)+'</span><div><div class="rtxt">'+r.t+'</div>'+(r.a?'<a href="'+AFF[r.a]+'" target="_blank" class="alink">Get started →</a>':'')+'</div></div>';}).join("");
+}
+function genCard(){
+  var canvas=document.getElementById("sharecanvas"),r=rating(score);
+  canvas.width=800;canvas.height=420;
+  var ctx=canvas.getContext("2d");
+  ctx.fillStyle="#0A0A0C";ctx.fillRect(0,0,800,420);
+  var g=ctx.createRadialGradient(400,210,0,400,210,300);g.addColorStop(0,"rgba(200,150,20,0.12)");g.addColorStop(1,"transparent");
+  ctx.fillStyle=g;ctx.fillRect(0,0,800,420);
+  ctx.strokeStyle="rgba(200,150,20,0.06)";ctx.lineWidth=1;
+  for(var x=0;x<800;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,420);ctx.stroke();}
+  for(var y=0;y<420;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(800,y);ctx.stroke();}
+  ctx.strokeStyle="rgba(200,150,20,0.3)";ctx.lineWidth=1.5;ctx.strokeRect(20,20,760,380);
+  function bc(x,y,dx,dy){ctx.beginPath();ctx.moveTo(x,y+dy*24);ctx.lineTo(x,y);ctx.lineTo(x+dx*24,y);ctx.stroke();}
+  ctx.strokeStyle="#FFD700";ctx.lineWidth=2.5;bc(20,20,1,1);bc(780,20,-1,1);bc(20,400,1,-1);bc(780,400,-1,-1);
+  ctx.font="bold 18px Georgia,serif";ctx.fillStyle="#FFD700";ctx.fillText("T",48,70);
+  ctx.font="14px Georgia,serif";ctx.fillStyle="#C8A820";ctx.fillText("LEVEL",64,70);
+  ctx.font="10px Georgia,serif";ctx.fillStyle="#444";ctx.fillText("AI HORMONAL ANALYSIS",48,88);
+  if(streak>1){ctx.font="bold 12px Georgia,serif";ctx.fillStyle="#FF6B35";ctx.textAlign="right";ctx.fillText("🔥 "+streak+"-DAY STREAK",752,60);ctx.textAlign="left";}
+  ctx.font="bold 130px Georgia,serif";ctx.fillStyle=r.c;ctx.textAlign="center";ctx.fillText(score,400,260);
+  ctx.font="11px Georgia,serif";ctx.fillStyle="#555";ctx.fillText("T-INDEX SCORE",400,140);
+  ctx.fillStyle=r.c+"22";ctx.beginPath();ctx.roundRect(330,278,140,36,6);ctx.fill();
+  ctx.strokeStyle=r.c;ctx.lineWidth=1;ctx.beginPath();ctx.roundRect(330,278,140,36,6);ctx.stroke();
+  ctx.font="bold 13px Georgia,serif";ctx.fillStyle=r.c;ctx.fillText(r.l,400,302);
+  ctx.font="12px Georgia,serif";ctx.fillStyle="#666";ctx.fillText(r.sub,400,340);
+  ctx.font="11px Georgia,serif";ctx.fillStyle="#333";ctx.fillText("tlevelapp.com",400,385);
+  ctx.textAlign="left";
+  shareUrl=canvas.toDataURL("image/png");
+  var img=document.getElementById("sharecard");img.src=shareUrl;img.classList.remove("hidden");
+}
+function dlCard(){if(!shareUrl)return;var a=document.createElement("a");a.href=shareUrl;a.download="my-tlevel-score.png";a.click();}
+function cpLink(){
+  var r=rating(score);
+  if(navigator.clipboard)navigator.clipboard.writeText("My T-Index: "+score+" ("+r.l+") — tlevelapp.com");
+  var b=document.getElementById("cpbtn");b.textContent="✓ Copied!";setTimeout(function(){b.textContent="Copy Link";},2000);
+}
+function resetApp(){
+  score=0;unlocked=false;shareUrl=null;imgData=null;uname="";
+  if(camStream)camStream.getTracks().forEach(function(t){t.stop();});
+  hide("camsec");if(scanTimer)clearInterval(scanTimer);
+  page("home");
+  if(streak>1){renderStreak("streakhome");show("streakhome");}
+}
+if(streak>1){renderStreak("streakhome");show("streakhome");}
+</script>
+
+</body>
+</html>
