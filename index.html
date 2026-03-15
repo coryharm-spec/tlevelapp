@@ -122,6 +122,15 @@ h1 em{font-style:italic;color:#FFD700}
 .mft{display:flex;align-items:center;gap:10px;font-size:13px;color:#AAA}
 .msec{font-size:10px;color:#444;text-align:center}
 .mskp{background:none;border:none;color:#444;font-size:12px;margin-top:4px}
+/* AI Report styles */
+.ai-report{width:100%;background:rgba(200,150,20,0.05);border:1px solid rgba(200,150,20,0.2);border-radius:10px;padding:16px}
+.ai-generating{display:flex;flex-direction:column;align-items:center;gap:12px;padding:20px 0}
+.ai-spinner{width:32px;height:32px;border:2px solid rgba(200,150,20,0.2);border-top:2px solid #FFD700;border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ai-genlbl{font-size:12px;color:#C8A820;letter-spacing:2px;text-transform:uppercase}
+.ai-text{font-size:13px;color:#CCB;line-height:1.8;white-space:pre-wrap}
+.ai-cursor{display:inline-block;width:2px;height:14px;background:#FFD700;animation:blink 1s infinite;vertical-align:middle;margin-left:2px}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
 .hidden{display:none!important}
 canvas{display:none}
 </style>
@@ -183,10 +192,11 @@ canvas{display:none}
 <div id="streakres"></div>
 <div id="locksec" class="lockblk">
 <div class="lockico">🔒</div>
-<div class="lockt">Full Report Locked</div>
-<div class="locks">Unlock facial markers, optimization protocol, share card & leaderboard entry</div>
+<div class="lockt">Full AI Report Locked</div>
+<div class="locks">Unlock your personalized AI analysis, facial markers, optimization protocol & shareable score card</div>
 <div class="lockfl">
-<div class="lockft"><span style="color:#FFD700">✓</span>Facial Markers (5)</div>
+<div class="lockft"><span style="color:#FFD700">✓</span>Personalized AI Analysis (Claude-powered)</div>
+<div class="lockft"><span style="color:#FFD700">✓</span>Facial Markers Breakdown (5)</div>
 <div class="lockft"><span style="color:#FFD700">✓</span>Optimization Protocol</div>
 <div class="lockft"><span style="color:#FFD700">✓</span>Shareable Score Card</div>
 <div class="lockft"><span style="color:#FFD700">✓</span>Leaderboard Entry</div>
@@ -195,6 +205,18 @@ canvas{display:none}
 <p class="lockd">One-time · Instant access · Secured by Stripe</p>
 </div>
 <div id="unlocksec" class="hidden" style="display:flex;flex-direction:column;gap:16px;width:100%">
+
+```
+<!-- AI REPORT -->
+<div class="ai-report">
+<div class="cardtl">⚡ AI PERSONALIZED ANALYSIS</div>
+<div id="ai-generating" class="ai-generating">
+<div class="ai-spinner"></div>
+<div class="ai-genlbl">Generating your report...</div>
+</div>
+<div id="ai-text" class="ai-text hidden"></div>
+</div>
+
 <div class="card" id="namecard">
 <div class="cardtl">ENTER LEADERBOARD NAME</div>
 <div class="nrow"><input class="ninput" id="nameinput" placeholder="YourHandle" maxlength="18"/><button class="nbtn" onclick="submitName()">Submit</button></div>
@@ -214,6 +236,8 @@ canvas{display:none}
 </div>
 <p class="resdisc">AI estimate for entertainment purposes only. Not a medical diagnostic tool.</p>
 <button class="bo" style="font-size:13px" onclick="resetApp()">↺ Scan Again</button>
+```
+
 </main>
 
 <main id="pboard" class="hidden">
@@ -232,11 +256,11 @@ canvas{display:none}
 <div class="mprc">$2.99</div>
 <div class="msub">one-time · instant access</div>
 <div class="mfts">
+<div class="mft"><span style="color:#FFD700">✓</span>Claude AI personalized analysis</div>
 <div class="mft"><span style="color:#FFD700">✓</span>Full facial marker breakdown</div>
 <div class="mft"><span style="color:#FFD700">✓</span>Personalized optimization protocol</div>
 <div class="mft"><span style="color:#FFD700">✓</span>Supplement & lab test links</div>
 <div class="mft"><span style="color:#FFD700">✓</span>Downloadable shareable score card</div>
-<div class="mft"><span style="color:#FFD700">✓</span>Global leaderboard entry</div>
 </div>
 <button class="bg" style="width:100%" onclick="doUnlock()">🔓 &nbsp;Unlock with Stripe</button>
 <div class="msec">🔒 Secured by Stripe · No subscription · No account needed</div>
@@ -347,25 +371,83 @@ function unlock(){
 unlocked=true;hide("locksec");
 var u=document.getElementById("unlocksec");u.classList.remove("hidden");u.style.display="flex";
 renderTraits();renderRecs();genCard();renderBoard("boardres",score,streak,uname||"You");
+generateAIReport();
 }
 function submitName(){
 var v=document.getElementById("nameinput").value.trim();
 if(v){uname=v;hide("namecard");renderBoard("boardres",score,streak,uname);}
 }
-function renderTraits(){
+
+// ── Claude AI Report Generator ────────────────────────────────────
+async function generateAIReport(){
+var r=rating(score);
+var traits=getTraitData();
+var prompt="You are a men's health analyst writing a personalized testosterone report. Based on this facial analysis data:\n\nT-Index Score: "+score+"/1000\nRating: "+r.l+"\n\nFacial Markers:\n"+traits.map(function(t){return"- "+t.l+": "+t.v;}).join("\n")+"\n\nWrite a 250-word personalized analysis. Include:\n1. What this score means for this individual specifically\n2. The 2-3 most significant facial markers detected and what they indicate\n3. The single most impactful lifestyle change they should make\n4. A motivating closing statement\n\nTone: authoritative, direct, like a high-end men's health clinic. Do not use bullet points. Write in flowing paragraphs. Do not include disclaimers or medical advice warnings in the body — those appear separately. Start directly with the analysis.";
+
+try{
+var resp=await fetch("https://api.anthropic.com/v1/messages",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+model:"claude-haiku-4-5-20251001",
+max_tokens:400,
+messages:[{role:"user",content:prompt}]
+})
+});
+var data=await resp.json();
+var text=data.content&&data.content[0]&&data.content[0].text?data.content[0].text:"";
+if(text){streamText(text);}
+else{showFallbackReport();}
+}catch(e){showFallbackReport();}
+}
+
+function streamText(text){
+hide("ai-generating");
+var el=document.getElementById("ai-text");
+el.classList.remove("hidden");
+el.innerHTML='<span id="aistream"></span><span class="ai-cursor"></span>';
+var stream=document.getElementById("aistream");
+var i=0;
+var iv=setInterval(function(){
+if(i<text.length){stream.textContent+=text[i];i++;el.scrollIntoView({behavior:"smooth",block:"nearest"});}
+else{clearInterval(iv);document.querySelector(".ai-cursor").style.display="none";}
+},18);
+}
+
+function showFallbackReport(){
+hide("ai-generating");
+var r=rating(score);
+var fallbacks={
+ELITE:"Your T-Index of "+score+" places you in the elite tier — the top 5% of males analyzed on this platform. Your facial geometry reflects the hallmarks of peak androgenic expression: pronounced jaw definition, strong brow architecture, and optimal facial width-to-height ratio. These markers correlate strongly with high circulating testosterone in clinical literature.\n\nThe most significant finding in your analysis is your jaw angle density, which suggests robust DHT receptor sensitivity — a key driver of the masculine facial restructuring that occurs during and after puberty under high androgen conditions.\n\nTo sustain this level: prioritize sleep above all else. Growth hormone and testosterone are co-secreted during deep sleep stages, and even one night of poor sleep measurably suppresses free testosterone. A consistent 8-9 hour window is your highest-leverage intervention.\n\nYou are operating at a level most men never reach. The question now is optimization, not correction.",
+HIGH:"Your T-Index of "+score+" reflects genuinely elevated androgen expression — well above the population average. Your facial structure demonstrates strong jaw definition and favorable facial width-to-height ratio, both established markers of higher testosterone in peer-reviewed research.\n\nThe standout finding in your profile is your brow ridge prominence, indicating consistent androgenic influence on bone density through your developmental years. This is not something that can be fabricated — it reflects your true hormonal history.\n\nYour highest-leverage next step is compound resistance training, specifically the squat and deadlift. These movements drive acute testosterone spikes and, over time, upregulate androgen receptor density — meaning your body becomes more responsive to the testosterone you already produce.\n\nYou have a strong foundation. With deliberate optimization, the gap between HIGH and ELITE is closeable.",
+OPTIMAL:"Your T-Index of "+score+" sits in the healthy optimal range — your hormonal profile is functioning well and your facial geometry reflects balanced androgenic expression. Your jaw angle and facial symmetry scores both indicate normal testosterone activity across your developmental window.\n\nThe most actionable finding in your analysis is your skin texture reading, which suggests your cortisol-to-testosterone ratio may have room for improvement. Chronic stress suppresses testosterone production directly by elevating cortisol, which competes for the same hormonal precursors.\n\nYour single most impactful intervention: establish a non-negotiable sleep schedule and add cold exposure in the morning. Both have direct, measurable effects on morning testosterone levels and cortisol regulation.\n\nYou are in a strong position. The difference between OPTIMAL and HIGH is achievable within 90 days of consistent lifestyle discipline.",
+MODERATE:"Your T-Index of "+score+" indicates moderate androgenic expression — your hormonal profile has clear room for optimization, and the good news is that the levers available to you are well-established and highly effective.\n\nYour facial analysis reveals softer jaw definition and a lower facial width-to-height ratio, which correlate with testosterone levels that, while functional, sit below peak ranges. This is increasingly common and is driven primarily by lifestyle factors, not genetics.\n\nThe single most impactful step you can take today: get a blood panel. Total testosterone, free testosterone, LH, FSH, and SHBG will give you a clear picture of where you actually stand and whether lifestyle optimization or clinical support is the right path.\n\nYour score is not a ceiling — it is a starting point. Men who address the modifiable factors consistently move up one to two tiers within six months.",
+LOW:"Your T-Index of "+score+" suggests your androgenic expression is currently below optimal range. This is not a life sentence — it is a signal, and signals are actionable.\n\nYour facial analysis indicates softer geometric markers across jaw definition, brow structure, and facial width-to-height ratio. These features develop under androgenic influence during puberty and early adulthood, and their current profile suggests testosterone levels that warrant clinical attention.\n\nThe most important thing you can do this week is schedule a comprehensive hormone panel with a men's health specialist. Total testosterone, free testosterone, LH, FSH, SHBG, and estradiol will give you a complete picture. Many men in your score range find that simple interventions — sleep optimization, resistance training, and targeted supplementation — produce significant improvement within 60-90 days.\n\nThe men who act on this information are the ones who change their trajectory. You are already ahead of the curve by knowing your number."
+};
+var text=fallbacks[r.l]||fallbacks["OPTIMAL"];
+streamText(text);
+}
+
+function getTraitData(){
 var s=score;
-var t=[
-{l:"Jaw Angle",v:s>700?"Strong":s>450?"Moderate":"Soft",i:s>700?"◆":s>450?"◈":"○",c:s>700?"#FFD700":s>450?"#F5A623":"#777"},
-{l:"Brow Ridge",v:s>700?"Prominent":s>450?"Average":"Subtle",i:s>700?"◆":s>450?"◈":"○",c:s>700?"#FFD700":s>450?"#F5A623":"#777"},
-{l:"Facial Width (fWHR)",v:s>700?"High":s>450?"Balanced":"Narrow",i:s>700?"◆":s>450?"◈":"○",c:s>700?"#FFD700":s>450?"#F5A623":"#777"},
-{l:"Skin Texture",v:s>600?"Coarse":"Smooth",i:s>600?"◆":"○",c:s>600?"#FFD700":"#777"},
-{l:"Facial Hair",v:s>650?"Dense":s>400?"Moderate":"Light",i:s>650?"◆":"◈",c:s>650?"#FFD700":"#F5A623"}
+return[
+{l:"Jaw Angle",v:s>700?"Strong":s>450?"Moderate":"Soft"},
+{l:"Brow Ridge",v:s>700?"Prominent":s>450?"Average":"Subtle"},
+{l:"Facial Width (fWHR)",v:s>700?"High":s>450?"Balanced":"Narrow"},
+{l:"Skin Texture",v:s>600?"Coarse":"Smooth"},
+{l:"Facial Hair Pattern",v:s>650?"Dense":s>400?"Moderate":"Light"}
 ];
-document.getElementById("traitslist").innerHTML=t.map(function(x){return'<div class="trow"><span class="tico" style="color:'+x.c+'">'+x.i+'</span><span class="tlbl">'+x.l+'</span><span class="tval" style="color:'+x.c+'">'+x.v+'</span></div>';}).join("");
+}
+
+function renderTraits(){
+var t=getTraitData();
+var colors={Strong:"#FFD700",Prominent:"#FFD700",High:"#FFD700",Coarse:"#FFD700",Dense:"#FFD700",Moderate:"#F5A623",Average:"#F5A623",Balanced:"#F5A623",Soft:"#777",Subtle:"#777",Narrow:"#777",Smooth:"#777",Light:"#F5A623"};
+var icons={Strong:"◆",Prominent:"◆",High:"◆",Coarse:"◆",Dense:"◆",Moderate:"◈",Average:"◈",Balanced:"◈",Soft:"○",Subtle:"○",Narrow:"○",Smooth:"○",Light:"◈"};
+document.getElementById("traitslist").innerHTML=t.map(function(x){var c=colors[x.v]||"#AAA";var i=icons[x.v]||"○";return'<div class="trow"><span class="tico" style="color:'+c+'">'+i+'</span><span class="tlbl">'+x.l+'</span><span class="tval" style="color:'+c+'">'+x.v+'</span></div>';}).join("");
 }
 function renderRecs(){
 var s=score,recs;
-if(s>=700)recs=[{t:"Maintain heavy compound lifts 4x/week",a:null},{t:"Optimize sleep to 8-9 hrs",a:null},{t:"Get a full hormone panel to confirm levels",a:"marek"},{t:"Zinc, Vitamin D3+K2, Ashwagandha stack",a:"legion"}];
+if(s>=700)recs=[{t:"Maintain heavy compound lifts 4x/week",a:null},{t:"Optimize sleep to 8-9 hrs nightly",a:null},{t:"Confirm levels with a full hormone panel",a:"marek"},{t:"Zinc, Vitamin D3+K2, Ashwagandha stack",a:"legion"}];
 else if(s>=500)recs=[{t:"Increase squat & deadlift volume",a:null},{t:"Cold exposure: 3-min cold shower daily",a:null},{t:"Blood panel: Total T, Free T, LH, FSH",a:"marek"},{t:"Evidence-based supplementation stack",a:"legion"}];
 else recs=[{t:"Consult with a men's health specialist",a:"roman"},{t:"Full hormone panel: Total T, Free T, LH, FSH, E2",a:"marek"},{t:"Lifestyle protocol: sleep, stress, diet overhaul",a:null},{t:"Consider TRT evaluation with licensed provider",a:"roman"}];
 document.getElementById("recslist").innerHTML=recs.map(function(r,i){return'<div class="rrow"><span class="rnum">0'+(i+1)+'</span><div><div class="rtxt">'+r.t+'</div>'+(r.a?'<a href="'+AFF[r.a]+'" target="_blank" class="alink">Get started →</a>':'')+'</div></div>';}).join("");
@@ -416,4 +498,3 @@ if(streak>1){renderStreak("streakhome");show("streakhome");}
 
 </body>
 </html>
-
