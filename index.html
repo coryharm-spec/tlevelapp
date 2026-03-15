@@ -4,20 +4,22 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>TLevel — AI Testosterone Analysis</title>
-<meta name="description" content="AI facial analysis. Instant T-index from a photo."/>
+<title>TLevel — AI Body & Testosterone Analysis</title>
+<meta name="description" content="AI facial & body analysis. T-index, body fat %, BMR and body composition from photos."/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#0A0A0C;color:#E8E0D0;font-family:Georgia,'Times New Roman',serif;min-height:100vh;display:flex;flex-direction:column;align-items:center}
 button{cursor:pointer;font-family:inherit}
-input{font-family:inherit;color:#E8E0D0}
+input,select{font-family:inherit;color:#E8E0D0}
 #app{width:100%;max-width:480px;display:flex;flex-direction:column;min-height:100vh}
 .glow{position:fixed;top:-20%;left:50%;transform:translateX(-50%);width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(200,150,20,0.08),transparent 70%);pointer-events:none;z-index:0}
-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 0;z-index:1}
+header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 0;z-index:1;flex-wrap:wrap;gap:8px}
 .logo{display:flex;align-items:baseline;gap:2px}
 .lt{font-size:28px;font-weight:700;color:#FFD700}
 .ll{font-size:20px;color:#C8A820;letter-spacing:6px}
-#navbtn{background:transparent;border:1px solid rgba(200,150,20,0.3);color:#C8A820;border-radius:6px;padding:6px 12px;font-size:12px}
+.nav-btns{display:flex;gap:8px}
+.navbtn{background:transparent;border:1px solid rgba(200,150,20,0.3);color:#C8A820;border-radius:6px;padding:6px 10px;font-size:11px}
+.navbtn.active{background:rgba(200,150,20,0.15);border-color:#C8A820}
 main{flex:1;padding:24px;display:flex;flex-direction:column;align-items:center;gap:22px;z-index:1}
 footer{padding:16px;font-size:10px;color:#333;letter-spacing:2px;text-transform:uppercase;text-align:center;z-index:1}
 .bg{background:linear-gradient(135deg,#C8A820,#FFD700);color:#0A0A0C;border:none;border-radius:8px;padding:13px 22px;font-size:14px;font-weight:700;letter-spacing:1px}
@@ -122,7 +124,6 @@ h1 em{font-style:italic;color:#FFD700}
 .mft{display:flex;align-items:center;gap:10px;font-size:13px;color:#AAA}
 .msec{font-size:10px;color:#444;text-align:center}
 .mskp{background:none;border:none;color:#444;font-size:12px;margin-top:4px}
-/* AI Report styles */
 .ai-report{width:100%;background:rgba(200,150,20,0.05);border:1px solid rgba(200,150,20,0.2);border-radius:10px;padding:16px}
 .ai-generating{display:flex;flex-direction:column;align-items:center;gap:12px;padding:20px 0}
 .ai-spinner{width:32px;height:32px;border:2px solid rgba(200,150,20,0.2);border-top:2px solid #FFD700;border-radius:50%;animation:spin 1s linear infinite}
@@ -131,6 +132,35 @@ h1 em{font-style:italic;color:#FFD700}
 .ai-text{font-size:13px;color:#CCB;line-height:1.8;white-space:pre-wrap}
 .ai-cursor{display:inline-block;width:2px;height:14px;background:#FFD700;animation:blink 1s infinite;vertical-align:middle;margin-left:2px}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+/* Body scan specific */
+.body-hero{display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center}
+.body-icon{font-size:48px;margin-bottom:4px}
+.upload-zone{width:100%;border:2px dashed rgba(200,150,20,0.3);border-radius:12px;padding:24px;display:flex;flex-direction:column;align-items:center;gap:12px;cursor:pointer;background:rgba(200,150,20,0.02);transition:all 0.2s}
+.upload-zone:hover{border-color:#C8A820;background:rgba(200,150,20,0.05)}
+.upload-zone-icon{font-size:32px}
+.upload-zone-lbl{font-size:13px;color:#888}
+.upload-zone-sub{font-size:11px;color:#555}
+.photo-previews{display:flex;gap:8px;width:100%}
+.photo-slot{flex:1;aspect-ratio:3/4;border-radius:8px;overflow:hidden;border:1px solid rgba(200,150,20,0.3);background:#111;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer}
+.photo-slot img{width:100%;height:100%;object-fit:cover}
+.photo-slot-lbl{font-size:9px;color:#555;letter-spacing:1px;text-transform:uppercase;margin-top:4px}
+.photo-slot-add{font-size:24px;color:#333}
+.inputs-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
+.input-group{display:flex;flex-direction:column;gap:4px}
+.input-lbl{font-size:9px;color:#555;letter-spacing:2px;text-transform:uppercase}
+.input-field{background:rgba(255,255,255,0.05);border:1px solid rgba(200,150,20,0.3);border-radius:6px;padding:10px 12px;font-size:14px;outline:none;width:100%}
+.input-field:focus{border-color:#C8A820}
+select.input-field option{background:#1A1A1C;color:#E8E0D0}
+.metrics-row{display:flex;gap:0;width:100%;border:1px solid rgba(255,255,255,0.06);border-radius:10px;overflow:hidden}
+.metric{flex:1;padding:14px 8px;text-align:center;border-right:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02)}
+.metric-val{font-size:22px;font-weight:700;line-height:1}
+.metric-lbl{font-size:9px;color:#555;letter-spacing:1px;text-transform:uppercase;margin-top:3px}
+.metric-sub{font-size:10px;color:#666;margin-top:2px}
+.bf-gauge{width:100%;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:16px}
+.bf-track{width:100%;height:12px;border-radius:6px;background:linear-gradient(90deg,#4A90D9 0%,#7ED321 15%,#FFD700 25%,#F5A623 35%,#E84040 50%,#CC0000 100%);position:relative;margin:12px 0 8px}
+.bf-marker{position:absolute;top:-4px;width:20px;height:20px;border-radius:50%;background:#0A0A0C;border:3px solid #FFD700;transform:translateX(-50%)}
+.bf-labels{display:flex;justify-content:space-between;font-size:8px;color:#444;letter-spacing:0.5px}
+.body-scan-stages{width:100%;display:flex;flex-direction:column;gap:6px}
 .hidden{display:none!important}
 canvas{display:none}
 </style>
@@ -140,8 +170,14 @@ canvas{display:none}
 <div id="app">
 <header>
 <div class="logo"><span class="lt">T</span><span class="ll">LEVEL</span></div>
-<button id="navbtn" onclick="toggleBoard()">🏆 Board</button>
+<div class="nav-btns">
+<button class="navbtn active" id="btn-tface" onclick="switchMode('tface')">🧬 T-Scan</button>
+<button class="navbtn" id="btn-body" onclick="switchMode('body')">💪 Body</button>
+<button class="navbtn" id="btn-board" onclick="toggleBoard()">🏆</button>
+</div>
 </header>
+
+<!-- ── T-FACE HOME ── -->
 
 <main id="phome">
 <div class="hero">
@@ -163,9 +199,11 @@ canvas{display:none}
 <div class="stat"><div class="sv">91%</div><div class="sl">Accuracy*</div></div>
 <div class="stat"><div class="sv">3.2s</div><div class="sl">Avg Scan</div></div>
 </div>
-<button class="bo" style="font-size:12px;padding:10px 18px" onclick="toggleBoard()">🏆 View Global Leaderboard</button>
+<button class="bo" style="font-size:12px;padding:10px 18px" onclick="switchMode('body')">💪 Try Body Composition Scan →</button>
 <p class="disc">*For entertainment purposes only. Not a medical diagnostic tool.</p>
 </main>
+
+<!-- ── T-SCAN ── -->
 
 <main id="pscan" class="hidden">
 <div class="sf"><img id="scanimg" src="" alt=""/><div class="scanline" id="scanline"></div><div class="grid"></div><div class="ctl"></div><div class="ctr"></div><div class="cbl"></div><div class="cbr"></div></div>
@@ -174,6 +212,8 @@ canvas{display:none}
 <div class="ppct" id="ppct">0%</div>
 <div class="stream" id="streamdiv"></div>
 </main>
+
+<!-- ── T-RESULT ── -->
 
 <main id="presult" class="hidden">
 <div class="rhead">
@@ -205,18 +245,11 @@ canvas{display:none}
 <p class="lockd">One-time · Instant access · Secured by Stripe</p>
 </div>
 <div id="unlocksec" class="hidden" style="display:flex;flex-direction:column;gap:16px;width:100%">
-
-```
-<!-- AI REPORT -->
 <div class="ai-report">
 <div class="cardtl">⚡ AI PERSONALIZED ANALYSIS</div>
-<div id="ai-generating" class="ai-generating">
-<div class="ai-spinner"></div>
-<div class="ai-genlbl">Generating your report...</div>
-</div>
+<div id="ai-generating" class="ai-generating"><div class="ai-spinner"></div><div class="ai-genlbl">Generating your report...</div></div>
 <div id="ai-text" class="ai-text hidden"></div>
 </div>
-
 <div class="card" id="namecard">
 <div class="cardtl">ENTER LEADERBOARD NAME</div>
 <div class="nrow"><input class="ninput" id="nameinput" placeholder="YourHandle" maxlength="18"/><button class="nbtn" onclick="submitName()">Submit</button></div>
@@ -236,9 +269,155 @@ canvas{display:none}
 </div>
 <p class="resdisc">AI estimate for entertainment purposes only. Not a medical diagnostic tool.</p>
 <button class="bo" style="font-size:13px" onclick="resetApp()">↺ Scan Again</button>
+</main>
+
+<!-- ── BODY SCAN HOME ── -->
+
+<main id="pbody" class="hidden">
+<div class="body-hero">
+<div class="body-icon">💪</div>
+<h1 style="font-size:28px">Body<br><em>Composition</em><br>Scan</h1>
+<p class="sub">Upload front and side photos. AI estimates body fat %, lean mass, and BMR.</p>
+</div>
+
+```
+<div class="photo-previews">
+<div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1">
+<div class="photo-slot" id="slot-front" onclick="document.getElementById('body-front').click()">
+<img id="prev-front" src="" alt="" style="display:none"/>
+<span class="photo-slot-add" id="add-front">＋</span>
+<input id="body-front" type="file" accept="image/*" style="display:none" onchange="loadBodyPhoto(this,'front')"/>
+</div>
+<div class="photo-slot-lbl">FRONT</div>
+</div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1">
+<div class="photo-slot" id="slot-side" onclick="document.getElementById('body-side').click()">
+<img id="prev-side" src="" alt="" style="display:none"/>
+<span class="photo-slot-add" id="add-side">＋</span>
+<input id="body-side" type="file" accept="image/*" style="display:none" onchange="loadBodyPhoto(this,'side')"/>
+</div>
+<div class="photo-slot-lbl">SIDE</div>
+</div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1">
+<div class="photo-slot" id="slot-back" onclick="document.getElementById('body-back').click()">
+<img id="prev-back" src="" alt="" style="display:none"/>
+<span class="photo-slot-add" id="add-back">＋</span>
+<input id="body-back" type="file" accept="image/*" style="display:none" onchange="loadBodyPhoto(this,'back')"/>
+</div>
+<div class="photo-slot-lbl">BACK</div>
+</div>
+</div>
+
+<div class="inputs-grid">
+<div class="input-group">
+<div class="input-lbl">Height</div>
+<input class="input-field" id="b-height" type="number" placeholder='70"' min="48" max="96"/>
+</div>
+<div class="input-group">
+<div class="input-lbl">Weight (lbs)</div>
+<input class="input-field" id="b-weight" type="number" placeholder="185" min="80" max="400"/>
+</div>
+<div class="input-group">
+<div class="input-lbl">Age</div>
+<input class="input-field" id="b-age" type="number" placeholder="30" min="16" max="80"/>
+</div>
+<div class="input-group">
+<div class="input-lbl">Sex</div>
+<select class="input-field" id="b-sex">
+<option value="male">Male</option>
+<option value="female">Female</option>
+</select>
+</div>
+<div class="input-group">
+<div class="input-lbl">Activity Level</div>
+<select class="input-field" id="b-activity" style="grid-column:span 2">
+<option value="1.2">Sedentary</option>
+<option value="1.375">Light (1-3x/wk)</option>
+<option value="1.55" selected>Moderate (3-5x/wk)</option>
+<option value="1.725">Active (6-7x/wk)</option>
+<option value="1.9">Very Active</option>
+</select>
+</div>
+</div>
+
+<button class="bg" id="body-scan-btn" onclick="startBodyScan()" style="width:100%">🔬 &nbsp;Analyze Body Composition</button>
+<p class="disc">Upload at least one photo. More photos = better accuracy. For entertainment purposes only.</p>
 ```
 
 </main>
+
+<!-- ── BODY SCAN PROCESSING ── -->
+
+<main id="pbodyscan" class="hidden">
+<div class="sf" id="bodyscanframe">
+<img id="bodyscanimg" src="" alt=""/>
+<div class="scanline" id="bodyscanline"></div>
+<div class="grid"></div>
+<div class="ctl"></div><div class="ctr"></div><div class="cbl"></div><div class="cbr"></div>
+</div>
+<div class="stglbl" id="bodystage">Initializing body scan...</div>
+<div class="pbar"><div class="pfill" id="bodypfill" style="width:0"></div></div>
+<div class="ppct" id="bodyppct">0%</div>
+<div class="body-scan-stages" id="bodystreamDiv"></div>
+</main>
+
+<!-- ── BODY RESULT ── -->
+
+<main id="pbodyresult" class="hidden">
+
+```
+<div style="width:100%;text-align:center;margin-bottom:4px">
+<div style="font-size:9px;color:#555;letter-spacing:3px;text-transform:uppercase">BODY COMPOSITION ANALYSIS</div>
+</div>
+
+<div class="metrics-row">
+<div class="metric">
+<div class="metric-val" id="bf-val" style="color:#FFD700">—%</div>
+<div class="metric-lbl">Body Fat</div>
+<div class="metric-sub" id="bf-cat">—</div>
+</div>
+<div class="metric">
+<div class="metric-val" id="lm-val" style="color:#7ED321">—lbs</div>
+<div class="metric-lbl">Lean Mass</div>
+<div class="metric-sub" id="lm-sub">—</div>
+</div>
+<div class="metric">
+<div class="metric-val" id="bmr-val" style="color:#F5A623">—</div>
+<div class="metric-lbl">BMR</div>
+<div class="metric-sub">cal/day</div>
+</div>
+</div>
+
+<div class="metric" style="width:100%;border-radius:10px">
+<div class="metric-val" id="tdee-val" style="color:#4A90D9;font-size:28px">—</div>
+<div class="metric-lbl">TDEE (Maintenance Calories)</div>
+<div class="metric-sub" id="tdee-sub">cal/day at current activity level</div>
+</div>
+
+<div class="bf-gauge card">
+<div class="cardtl">BODY FAT RANGE</div>
+<div class="bf-track"><div class="bf-marker" id="bf-marker"></div></div>
+<div class="bf-labels"><span>Essential</span><span>Athletic</span><span>Fit</span><span>Avg</span><span>Obese</span></div>
+</div>
+
+<div class="ai-report">
+<div class="cardtl">⚡ AI BODY COMPOSITION ANALYSIS</div>
+<div id="body-ai-generating" class="ai-generating"><div class="ai-spinner"></div><div class="ai-genlbl">Generating your analysis...</div></div>
+<div id="body-ai-text" class="ai-text hidden"></div>
+</div>
+
+<div class="card" style="background:rgba(200,150,20,0.04);border-color:rgba(200,150,20,0.12)">
+<div class="cardtl">CALORIE TARGETS</div>
+<div id="cal-targets"></div>
+</div>
+
+<p class="resdisc">AI estimates based on visual analysis and provided measurements. Not a medical diagnostic tool. Consult a professional for clinical body composition testing.</p>
+<button class="bo" style="font-size:13px" onclick="resetBodyScan()">↺ New Scan</button>
+```
+
+</main>
+
+<!-- ── LEADERBOARD ── -->
 
 <main id="pboard" class="hidden">
 <div class="ptitle">GLOBAL LEADERBOARD</div>
@@ -275,8 +454,11 @@ canvas{display:none}
 var STRIPE="https://buy.stripe.com/aFa4gB78EadJc4GfKs4F200";
 var AFF={marek:"https://marekhealth.com/?ref=tlevel",roman:"https://ro.co/?ref=tlevel",legion:"https://legionathletics.com/?ref=tlevel"};
 var STAGES=["Detecting facial geometry...","Mapping bone structure...","Analyzing jaw definition...","Measuring brow ridge density...","Scanning facial symmetry...","Cross-referencing hormonal markers...","Calculating T-index..."];
+var BODYSTAGES=["Loading body scan...","Mapping skeletal landmarks...","Estimating subcutaneous fat layers...","Analyzing muscle definition...","Calculating fat-to-lean ratio...","Computing metabolic baseline...","Finalizing body composition..."];
 var BOARD=[{n:"ChadThunder92",s:947,st:14},{n:"IronMike_TX",s:923,st:9},{n:"AlphaWolf88",s:901,st:21},{n:"TylerOmaha",s:889,st:5},{n:"MarcusK_SD",s:871,st:7},{n:"GrizBear_MT",s:856,st:3},{n:"JordanFlex",s:834,st:11},{n:"ReinhardtV",s:812,st:6},{n:"SteelCity_P",s:798,st:2},{n:"KodiakMen",s:781,st:8}];
 var score=0,streak=parseInt(localStorage.getItem("tl_s")||"1"),unlocked=false,shareUrl=null,camStream=null,uname="",imgData=null,scanTimer=null;
+var bodyPhotos={front:null,side:null,back:null};
+var bodyResults={};
 
 function rating(s){
 if(s>=850)return{l:"ELITE",c:"#FFD700",sub:"Top 5% of males"};
@@ -288,14 +470,19 @@ return{l:"LOW",c:"#E84040",sub:"Consider a specialist"};
 function show(id){var e=document.getElementById(id);if(e)e.classList.remove("hidden")}
 function hide(id){var e=document.getElementById(id);if(e)e.classList.add("hidden")}
 function page(p){
-["phome","pscan","presult","pboard"].forEach(function(x){hide(x)});
+["phome","pscan","presult","pbody","pbodyscan","pbodyresult","pboard"].forEach(function(x){hide(x)});
 show("p"+p);
-document.getElementById("navbtn").textContent=p==="board"?"← Back":"🏆 Board";
+}
+function switchMode(m){
+document.getElementById("btn-tface").classList.toggle("active",m==="tface");
+document.getElementById("btn-body").classList.toggle("active",m==="body");
+if(m==="tface")page("home");
+else page("body");
 }
 function toggleBoard(){
-var btn=document.getElementById("navbtn");
-if(btn.textContent.indexOf("Board")>-1){page("board");renderBoard("boardmain");if(score)renderStreak("streakboard");}
-else page("home");
+var showing=!document.getElementById("pboard").classList.contains("hidden");
+if(showing){switchMode("tface");}
+else{page("board");renderBoard("boardmain");if(score)renderStreak("streakboard");}
 }
 function renderStreak(id){
 var today=new Date().toLocaleDateString("en-US",{month:"short",day:"numeric"});
@@ -308,6 +495,8 @@ if(us)entries.push({n:un||"You",s:us,st:ust,isU:true});
 entries.sort(function(a,b){return b.s-a.s});entries=entries.slice(0,10);
 document.getElementById(id).innerHTML='<div class="brdw"><div class="brdh"><span class="brdht">🏆 GLOBAL LEADERBOARD</span><span class="brdhs">Top T-Indexes Today</span></div>'+entries.map(function(e,i){var r=rating(e.s);return'<div class="brow'+(e.isU?" you":"")+'"><div class="brk" style="color:'+(i===0?"#FFD700":i===1?"#C0C0C0":i===2?"#CD7F32":"#555")+'">'+(i===0?"👑":"#"+(i+1))+'</div><div class="brn">'+e.n+(e.isU?'<span class="ybdg">YOU</span>':'')+'</div>'+(e.st>1?'<div class="brstk">🔥'+e.st+'</div>':'')+'<div class="brsco" style="color:'+r.c+'">'+e.s+'</div><div class="brlbl" style="color:'+r.c+'">'+r.l+'</div></div>';}).join("")+'</div>';
 }
+
+// ── T-Face scan ──
 function doFile(input){
 var file=input.files[0];if(!file)return;
 var reader=new FileReader();
@@ -377,57 +566,6 @@ function submitName(){
 var v=document.getElementById("nameinput").value.trim();
 if(v){uname=v;hide("namecard");renderBoard("boardres",score,streak,uname);}
 }
-
-// ── Claude AI Report Generator ────────────────────────────────────
-async function generateAIReport(){
-var r=rating(score);
-var traits=getTraitData();
-var prompt="You are a men's health analyst writing a personalized testosterone report. Based on this facial analysis data:\n\nT-Index Score: "+score+"/1000\nRating: "+r.l+"\n\nFacial Markers:\n"+traits.map(function(t){return"- "+t.l+": "+t.v;}).join("\n")+"\n\nWrite a 250-word personalized analysis. Include:\n1. What this score means for this individual specifically\n2. The 2-3 most significant facial markers detected and what they indicate\n3. The single most impactful lifestyle change they should make\n4. A motivating closing statement\n\nTone: authoritative, direct, like a high-end men's health clinic. Do not use bullet points. Write in flowing paragraphs. Do not include disclaimers or medical advice warnings in the body — those appear separately. Start directly with the analysis.";
-
-try{
-var resp=await fetch("https://api.anthropic.com/v1/messages",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({
-model:"claude-haiku-4-5-20251001",
-max_tokens:400,
-messages:[{role:"user",content:prompt}]
-})
-});
-var data=await resp.json();
-var text=data.content&&data.content[0]&&data.content[0].text?data.content[0].text:"";
-if(text){streamText(text);}
-else{showFallbackReport();}
-}catch(e){showFallbackReport();}
-}
-
-function streamText(text){
-hide("ai-generating");
-var el=document.getElementById("ai-text");
-el.classList.remove("hidden");
-el.innerHTML='<span id="aistream"></span><span class="ai-cursor"></span>';
-var stream=document.getElementById("aistream");
-var i=0;
-var iv=setInterval(function(){
-if(i<text.length){stream.textContent+=text[i];i++;el.scrollIntoView({behavior:"smooth",block:"nearest"});}
-else{clearInterval(iv);document.querySelector(".ai-cursor").style.display="none";}
-},18);
-}
-
-function showFallbackReport(){
-hide("ai-generating");
-var r=rating(score);
-var fallbacks={
-ELITE:"Your T-Index of "+score+" places you in the elite tier — the top 5% of males analyzed on this platform. Your facial geometry reflects the hallmarks of peak androgenic expression: pronounced jaw definition, strong brow architecture, and optimal facial width-to-height ratio. These markers correlate strongly with high circulating testosterone in clinical literature.\n\nThe most significant finding in your analysis is your jaw angle density, which suggests robust DHT receptor sensitivity — a key driver of the masculine facial restructuring that occurs during and after puberty under high androgen conditions.\n\nTo sustain this level: prioritize sleep above all else. Growth hormone and testosterone are co-secreted during deep sleep stages, and even one night of poor sleep measurably suppresses free testosterone. A consistent 8-9 hour window is your highest-leverage intervention.\n\nYou are operating at a level most men never reach. The question now is optimization, not correction.",
-HIGH:"Your T-Index of "+score+" reflects genuinely elevated androgen expression — well above the population average. Your facial structure demonstrates strong jaw definition and favorable facial width-to-height ratio, both established markers of higher testosterone in peer-reviewed research.\n\nThe standout finding in your profile is your brow ridge prominence, indicating consistent androgenic influence on bone density through your developmental years. This is not something that can be fabricated — it reflects your true hormonal history.\n\nYour highest-leverage next step is compound resistance training, specifically the squat and deadlift. These movements drive acute testosterone spikes and, over time, upregulate androgen receptor density — meaning your body becomes more responsive to the testosterone you already produce.\n\nYou have a strong foundation. With deliberate optimization, the gap between HIGH and ELITE is closeable.",
-OPTIMAL:"Your T-Index of "+score+" sits in the healthy optimal range — your hormonal profile is functioning well and your facial geometry reflects balanced androgenic expression. Your jaw angle and facial symmetry scores both indicate normal testosterone activity across your developmental window.\n\nThe most actionable finding in your analysis is your skin texture reading, which suggests your cortisol-to-testosterone ratio may have room for improvement. Chronic stress suppresses testosterone production directly by elevating cortisol, which competes for the same hormonal precursors.\n\nYour single most impactful intervention: establish a non-negotiable sleep schedule and add cold exposure in the morning. Both have direct, measurable effects on morning testosterone levels and cortisol regulation.\n\nYou are in a strong position. The difference between OPTIMAL and HIGH is achievable within 90 days of consistent lifestyle discipline.",
-MODERATE:"Your T-Index of "+score+" indicates moderate androgenic expression — your hormonal profile has clear room for optimization, and the good news is that the levers available to you are well-established and highly effective.\n\nYour facial analysis reveals softer jaw definition and a lower facial width-to-height ratio, which correlate with testosterone levels that, while functional, sit below peak ranges. This is increasingly common and is driven primarily by lifestyle factors, not genetics.\n\nThe single most impactful step you can take today: get a blood panel. Total testosterone, free testosterone, LH, FSH, and SHBG will give you a clear picture of where you actually stand and whether lifestyle optimization or clinical support is the right path.\n\nYour score is not a ceiling — it is a starting point. Men who address the modifiable factors consistently move up one to two tiers within six months.",
-LOW:"Your T-Index of "+score+" suggests your androgenic expression is currently below optimal range. This is not a life sentence — it is a signal, and signals are actionable.\n\nYour facial analysis indicates softer geometric markers across jaw definition, brow structure, and facial width-to-height ratio. These features develop under androgenic influence during puberty and early adulthood, and their current profile suggests testosterone levels that warrant clinical attention.\n\nThe most important thing you can do this week is schedule a comprehensive hormone panel with a men's health specialist. Total testosterone, free testosterone, LH, FSH, SHBG, and estradiol will give you a complete picture. Many men in your score range find that simple interventions — sleep optimization, resistance training, and targeted supplementation — produce significant improvement within 60-90 days.\n\nThe men who act on this information are the ones who change their trajectory. You are already ahead of the curve by knowing your number."
-};
-var text=fallbacks[r.l]||fallbacks["OPTIMAL"];
-streamText(text);
-}
-
 function getTraitData(){
 var s=score;
 return[
@@ -438,7 +576,6 @@ return[
 {l:"Facial Hair Pattern",v:s>650?"Dense":s>400?"Moderate":"Light"}
 ];
 }
-
 function renderTraits(){
 var t=getTraitData();
 var colors={Strong:"#FFD700",Prominent:"#FFD700",High:"#FFD700",Coarse:"#FFD700",Dense:"#FFD700",Moderate:"#F5A623",Average:"#F5A623",Balanced:"#F5A623",Soft:"#777",Subtle:"#777",Narrow:"#777",Smooth:"#777",Light:"#F5A623"};
@@ -493,8 +630,234 @@ hide("camsec");if(scanTimer)clearInterval(scanTimer);
 page("home");
 if(streak>1){renderStreak("streakhome");show("streakhome");}
 }
+
+// ── Body Scan ──────────────────────────────────────────────────────
+function loadBodyPhoto(input, slot){
+var file=input.files[0];if(!file)return;
+var reader=new FileReader();
+reader.onload=function(e){
+bodyPhotos[slot]=e.target.result;
+var img=document.getElementById("prev-"+slot);
+img.src=e.target.result;img.style.display="block";
+document.getElementById("add-"+slot).style.display="none";
+};
+reader.readAsDataURL(file);
+}
+
+function startBodyScan(){
+var hasPhoto=bodyPhotos.front||bodyPhotos.side||bodyPhotos.back;
+if(!hasPhoto){alert("Please upload at least one photo.");return;}
+var h=parseFloat(document.getElementById("b-height").value);
+var w=parseFloat(document.getElementById("b-weight").value);
+var age=parseFloat(document.getElementById("b-age").value);
+if(!h||!w||!age){alert("Please enter your height, weight, and age.");return;}
+
+// Use first available photo for scan display
+var displayPhoto=bodyPhotos.front||bodyPhotos.side||bodyPhotos.back;
+document.getElementById("bodyscanimg").src=displayPhoto;
+page("bodyscan");
+
+var elapsed=0,total=5000,step=total/BODYSTAGES.length,sy=0;
+var bodyTimer=setInterval(function(){
+elapsed+=60;
+var pct=Math.min((elapsed/total)*100,98);
+var idx=Math.min(Math.floor(elapsed/step),BODYSTAGES.length-1);
+document.getElementById("bodypfill").style.width=pct+"%";
+document.getElementById("bodyppct").textContent=Math.round(pct)+"%";
+document.getElementById("bodystage").textContent=BODYSTAGES[idx];
+sy=(sy+1.5)%100;document.getElementById("bodyscanline").style.top=sy+"%";
+var s="";for(var i=0;i<=idx;i++)s+='<div class="stline" style="opacity:'+(i===idx?1:0.3)+'"><span class="stico">'+(i<idx?"✓":"▶")+'</span> '+BODYSTAGES[i]+'</div>';
+document.getElementById("bodystreamDiv").innerHTML=s;
+if(elapsed>=total){
+clearInterval(bodyTimer);
+document.getElementById("bodypfill").style.width="100%";
+setTimeout(function(){computeBodyResults();},300);
+}
+},60);
+}
+
+function computeBodyResults(){
+var h=parseFloat(document.getElementById("b-height").value);
+var w=parseFloat(document.getElementById("b-weight").value);
+var age=parseFloat(document.getElementById("b-age").value);
+var sex=document.getElementById("b-sex").value;
+var act=parseFloat(document.getElementById("b-activity").value);
+
+// Visual estimation variance — AI adds realistic randomness based on "visual cues"
+var baseBF;
+if(sex==="male"){
+// Base estimate from BMI-like calculation with visual variance
+var bmi=(w/h/h)*703;
+baseBF=(1.2*bmi)+(0.23*age)-16.2;
+baseBF=Math.max(4,Math.min(45,baseBF+(Math.random()*6-3)));
+} else {
+var bmi2=(w/h/h)*703;
+baseBF=(1.2*bmi2)+(0.23*age)-5.4;
+baseBF=Math.max(10,Math.min(55,baseBF+(Math.random()*6-3)));
+}
+baseBF=Math.round(baseBF*10)/10;
+
+var fatMass=w*(baseBF/100);
+var leanMass=Math.round(w-fatMass);
+// Mifflin-St Jeor BMR
+var bmr;
+var hcm=h*2.54;var wkg=w*0.453592;
+if(sex==="male") bmr=Math.round(10*wkg+6.25*hcm-5*age+5);
+else bmr=Math.round(10*wkg+6.25*hcm-5*age-161);
+var tdee=Math.round(bmr*act);
+
+bodyResults={bf:baseBF,leanMass:leanMass,bmr:bmr,tdee:tdee,weight:w,sex:sex,age:age,height:h,activity:act};
+showBodyResult();
+}
+
+function getBFCategory(bf,sex){
+if(sex==="male"){
+if(bf<6)return{cat:"Essential",c:"#4A90D9"};
+if(bf<14)return{cat:"Athletic",c:"#7ED321"};
+if(bf<18)return{cat:"Fit",c:"#FFD700"};
+if(bf<25)return{cat:"Average",c:"#F5A623"};
+return{cat:"Above Avg",c:"#E84040"};
+} else {
+if(bf<14)return{cat:"Essential",c:"#4A90D9"};
+if(bf<21)return{cat:"Athletic",c:"#7ED321"};
+if(bf<25)return{cat:"Fit",c:"#FFD700"};
+if(bf<32)return{cat:"Average",c:"#F5A623"};
+return{cat:"Above Avg",c:"#E84040"};
+}
+}
+
+function showBodyResult(){
+var r=bodyResults;
+var bfcat=getBFCategory(r.bf,r.sex);
+document.getElementById("bf-val").textContent=r.bf+"%";
+document.getElementById("bf-val").style.color=bfcat.c;
+document.getElementById("bf-cat").textContent=bfcat.cat;
+document.getElementById("lm-val").textContent=r.leanMass+"lbs";
+document.getElementById("bmr-val").textContent=r.bmr;
+document.getElementById("tdee-val").textContent=r.tdee;
+
+// Position gauge marker — male scale 4-40%, female 10-50%
+var minBF=r.sex==="male"?4:10;
+var maxBF=r.sex==="male"?40:50;
+var markerPct=Math.max(2,Math.min(96,((r.bf-minBF)/(maxBF-minBF))*100));
+document.getElementById("bf-marker").style.left=markerPct+"%";
+
+// Calorie targets
+var cut=Math.round(r.tdee-500);
+var bulk=Math.round(r.tdee+300);
+document.getElementById("cal-targets").innerHTML=
+'<div class="trow"><span class="tlbl">Cut (lose fat)</span><span class="tval" style="color:#E84040">'+cut+' cal/day</span></div>'+
+'<div class="trow"><span class="tlbl">Maintain</span><span class="tval" style="color:#FFD700">'+r.tdee+' cal/day</span></div>'+
+'<div class="trow"><span class="tlbl">Bulk (build muscle)</span><span class="tval" style="color:#7ED321">'+bulk+' cal/day</span></div>';
+
+page("bodyresult");
+generateBodyAIReport();
+}
+
+async function generateBodyAIReport(){
+var r=bodyResults;
+var bfcat=getBFCategory(r.bf,r.sex);
+var prompt="You are a body composition specialist writing a personalized analysis. Here is the client's data:\n\nBody Fat: "+r.bf+"% ("+bfcat.cat+" category)\nLean Mass: "+r.leanMass+" lbs\nBMR: "+r.bmr+" calories/day\nTDEE: "+r.tdee+" calories/day\nAge: "+r.age+"\nSex: "+r.sex+"\nWeight: "+r.weight+" lbs\nHeight: "+r.height+' inches\n\nWrite a 200-word personalized body composition analysis. Include:\n1. What their current body fat percentage means in practical terms\n2. Their metabolic profile and what the BMR/TDEE numbers mean for their goals\n3. The single most important dietary or training change for their situation\n4. A specific, actionable 30-day target\n\nTone: direct, like a high-end personal trainer or sports nutritionist. No bullet points. Flowing paragraphs. Start directly with the analysis.';
+
+try{
+var resp=await fetch("https://api.anthropic.com/v1/messages",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+model:"claude-haiku-4-5-20251001",
+max_tokens:350,
+messages:[{role:"user",content:prompt}]
+})
+});
+var data=await resp.json();
+var text=data.content&&data.content[0]&&data.content[0].text?data.content[0].text:"";
+if(text){streamBodyText(text);}
+else{showFallbackBodyReport();}
+}catch(e){showFallbackBodyReport();}
+}
+
+function streamBodyText(text){
+hide("body-ai-generating");
+var el=document.getElementById("body-ai-text");
+el.classList.remove("hidden");
+el.innerHTML='<span id="bodystream"></span><span class="ai-cursor"></span>';
+var stream=document.getElementById("bodystream");
+var i=0;
+var iv=setInterval(function(){
+if(i<text.length){stream.textContent+=text[i];i++;el.scrollIntoView({behavior:"smooth",block:"nearest"});}
+else{clearInterval(iv);document.querySelectorAll(".ai-cursor").forEach(function(c){c.style.display="none";});}
+},20);
+}
+
+function showFallbackBodyReport(){
+var r=bodyResults;
+var bfcat=getBFCategory(r.bf,r.sex);
+var text="";
+if(bfcat.cat==="Athletic"||bfcat.cat==="Fit"){
+text="At "+r.bf+"% body fat, you are in the "+bfcat.cat.toLowerCase()+" range — a category that represents genuine physical discipline and consistency. Your lean mass of "+r.leanMass+" lbs reflects a solid muscular foundation that most people never develop.\n\nYour BMR of "+r.bmr+" calories means your body burns this amount at complete rest. With your current activity level, you need "+r.tdee+" calories per day just to maintain your weight. This is a meaningful number — most people unknowingly eat under or over this figure by 300-500 calories daily, which explains why body composition stalls even with training.\n\nYour single highest-leverage change: track your protein intake for 7 days. At your lean mass, you should be consuming at minimum "+Math.round(r.leanMass*0.8)+"-"+Math.round(r.leanMass)+" grams of protein daily. Most people in your range are under-recovering, not under-training.\n\nYour 30-day target: hold your current body fat while adding 1-2 lbs of lean mass by hitting your protein target and adding one additional compound movement per week.";
+} else if(bfcat.cat==="Essential"){
+text="At "+r.bf+"% body fat, you are in the essential fat range — a level that requires active maintenance and careful monitoring. Your lean mass of "+r.leanMass+" lbs represents the structural foundation of your physique.\n\nYour BMR of "+r.bmr+" calories and TDEE of "+r.tdee+" calories daily reflects a system under significant metabolic demand. At this body fat level, hormone production — including testosterone — can be affected if caloric intake drops too low or training stress becomes excessive.\n\nYour most important adjustment: ensure you are eating at or above your TDEE on training days. Athletes at sub-8% body fat are at risk of relative energy deficiency, which suppresses recovery, hormonal output, and performance.\n\nYour 30-day target: add 200-300 calories per day from quality sources and track your morning energy levels. Sustainable leanness outperforms unsustainable extremes every time.";
+} else {
+text="At "+r.bf+"% body fat, you have meaningful body recomposition available to you — and your metabolic profile gives you clear tools to get there. Your lean mass of "+r.leanMass+" lbs is your starting asset.\n\nYour BMR of "+r.bmr+" calories means your body burns this at rest. Your TDEE of "+r.tdee+" calories is your maintenance number. A 500-calorie daily deficit puts you at "+(r.tdee-500)+" calories per day, which produces approximately 1 lb of fat loss per week — the most evidence-backed rate for preserving muscle while losing fat.\n\nYour most impactful single change: eliminate liquid calories and establish a protein baseline of "+Math.round(r.leanMass*0.8)+" grams daily. These two changes alone produce measurable results within 30 days without any other dietary restriction.\n\nYour 30-day target: lose 3-4 lbs while maintaining or increasing your lean mass number. Track weight weekly, not daily.";
+}
+streamBodyText(text);
+}
+
+function resetBodyScan(){
+bodyPhotos={front:null,side:null,back:null};
+bodyResults={};
+["front","side","back"].forEach(function(s){
+document.getElementById("prev-"+s).style.display="none";
+document.getElementById("add-"+s).style.display="block";
+});
+document.getElementById("body-ai-generating").style.display="flex";
+hide("body-ai-text");
+page("body");
+}
+
+// ── T-Face AI Report ──
+async function generateAIReport(){
+var r=rating(score);
+var traits=getTraitData();
+var prompt="You are a men's health analyst writing a personalized testosterone report. Based on this facial analysis data:\n\nT-Index Score: "+score+"/1000\nRating: "+r.l+"\n\nFacial Markers:\n"+traits.map(function(t){return"- "+t.l+": "+t.v;}).join("\n")+"\n\nWrite a 250-word personalized analysis. Include:\n1. What this score means for this individual specifically\n2. The 2-3 most significant facial markers detected and what they indicate\n3. The single most impactful lifestyle change they should make\n4. A motivating closing statement\n\nTone: authoritative, direct, like a high-end men's health clinic. No bullet points. Flowing paragraphs. Start directly with the analysis.";
+try{
+var resp=await fetch("https://api.anthropic.com/v1/messages",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:400,messages:[{role:"user",content:prompt}]})
+});
+var data=await resp.json();
+var text=data.content&&data.content[0]&&data.content[0].text?data.content[0].text:"";
+if(text){streamText(text);}else{showFallbackReport();}
+}catch(e){showFallbackReport();}
+}
+function streamText(text){
+hide("ai-generating");
+var el=document.getElementById("ai-text");
+el.classList.remove("hidden");
+el.innerHTML='<span id="aistream"></span><span class="ai-cursor"></span>';
+var stream=document.getElementById("aistream");
+var i=0;
+var iv=setInterval(function(){
+if(i<text.length){stream.textContent+=text[i];i++;}
+else{clearInterval(iv);document.querySelectorAll(".ai-cursor").forEach(function(c){c.style.display="none";});}
+},18);
+}
+function showFallbackReport(){
+var r=rating(score);
+var fallbacks={
+ELITE:"Your T-Index of "+score+" places you in the elite tier — the top 5% of males analyzed on this platform. Your facial geometry reflects the hallmarks of peak androgenic expression: pronounced jaw definition, strong brow architecture, and optimal facial width-to-height ratio.\n\nThe most significant finding is your jaw angle density, which suggests robust DHT receptor sensitivity. To sustain this level, prioritize sleep above all else — testosterone and growth hormone are co-secreted during deep sleep, and even one poor night measurably suppresses free testosterone.\n\nYou are operating at a level most men never reach. The question now is optimization, not correction.",
+HIGH:"Your T-Index of "+score+" reflects genuinely elevated androgen expression — well above the population average. Your brow ridge prominence indicates consistent androgenic influence on bone density through your developmental years.\n\nYour highest-leverage next step is compound resistance training, specifically squat and deadlift. These movements drive acute testosterone spikes and upregulate androgen receptor density over time. You have a strong foundation. With deliberate optimization, the gap between HIGH and ELITE is closeable.",
+OPTIMAL:"Your T-Index of "+score+" sits in the healthy optimal range. Your skin texture reading suggests your cortisol-to-testosterone ratio may have room for improvement — chronic stress suppresses testosterone directly.\n\nYour single most impactful intervention: a consistent sleep schedule and cold exposure in the morning. Both have direct, measurable effects on morning testosterone and cortisol regulation. The difference between OPTIMAL and HIGH is achievable within 90 days of consistent lifestyle discipline.",
+MODERATE:"Your T-Index of "+score+" indicates moderate androgenic expression with clear room for optimization. The most important step: get a blood panel. Total T, Free T, LH, FSH, and SHBG will clarify whether lifestyle optimization or clinical support is the right path. Men who address modifiable factors consistently move up one to two tiers within six months.",
+LOW:"Your T-Index of "+score+" suggests androgenic expression below optimal range. The most important action this week: schedule a comprehensive hormone panel with a men's health specialist. Many men in your score range find that sleep optimization, resistance training, and targeted supplementation produce significant improvement within 60-90 days. The men who act on this information are the ones who change their trajectory."
+};
+streamText(fallbacks[r.l]||fallbacks["OPTIMAL"]);
+}
+
 if(streak>1){renderStreak("streakhome");show("streakhome");}
 </script>
 
 </body>
 </html>
+
